@@ -205,7 +205,9 @@ enum optcla decclass(const enum optdec);
 
 #ifdef OPT_GENERIC
 #ifndef OPT_MULTI
+#ifndef OPT_ALTIVEC
 #	define defopt generic
+#endif
 #endif
 #endif
 

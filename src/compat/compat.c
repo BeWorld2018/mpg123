@@ -485,6 +485,7 @@ size_t unintr_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 	return written;
 }
 
+#ifndef __MORPHOS__
 #ifndef NO_CATCHSIGNAL
 #if (!defined(WIN32) || defined (__CYGWIN__)) && defined(HAVE_SIGNAL_H)
 void (*catchsignal(int signum, void(*handler)()))()
@@ -504,5 +505,6 @@ void (*catchsignal(int signum, void(*handler)()))()
 		return ((void (*)()) -1);
 	return (old_sa.sa_handler);
 }
+#endif
 #endif
 #endif

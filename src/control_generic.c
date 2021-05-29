@@ -397,6 +397,7 @@ int control_generic (mpg123_handle *fr)
 		outstream = stdout;
 		out_is_term = stdout_is_term;
 	}
+#ifndef __MORPHOS__
 #ifndef WIN32
  	setlinebuf(outstream);
 #else /* perhaps just use setvbuf as it's C89 */
@@ -405,6 +406,7 @@ int control_generic (mpg123_handle *fr)
 	return 0;
 	setvbuf(outstream, (char*)NULL, _IOLBF, 0);
 	*/
+#endif
 #endif
 	/* the command behaviour is different, so is the ID */
 	/* now also with version for command availability */

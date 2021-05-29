@@ -1,0 +1,64 @@
+# Makefile to build the libmpg123.a shared
+#
+CDEFS   = -DHAVE_CONFIG_H -DGENERIC -DOPT_ALTIVEC -DOPT_GENERIC -DREAL_IS_FLOAT -DNOXFERMEM 
+
+CC      = ppc-morphos-gcc-10 -noixemul
+
+INCLUDE = -Isrc/ -Isrc/libmpg123 -Isrc/compat
+CFLAGS  = $(INCLUDE) -Os -fomit-frame-pointer -funroll-all-loops -finline-functions -ffast-math -maltivec -faltivec $(CDEFS)
+
+AR	= ppc-morphos-ar
+
+TARGET  = libmpg123_shared.a
+
+SOURCES = src/libmpg123/parse.o \
+		  src/libmpg123/frame.o \
+		  src/libmpg123/format.o \
+		  src/libmpg123/dct64.o \
+		  src/libmpg123/equalizer.o \
+		  src/libmpg123/id3.o \
+		  src/libmpg123/optimize.o \
+		  src/libmpg123/readers.o \
+		  src/libmpg123/tabinit.o \
+		  src/libmpg123/libmpg123.o \
+		  src/libmpg123/index.o \
+		  src/libmpg123/stringbuf.o \
+		  src/libmpg123/icy.o \
+		  src/libmpg123/icy2utf8.o \
+		  src/libmpg123/ntom.o \
+		  src/libmpg123/synth.o \
+		  src/libmpg123/synth_8bit.o \
+		  src/libmpg123/layer1.o \
+		  src/libmpg123/layer2.o \
+		  src/libmpg123/layer3.o \
+		  src/libmpg123/synth_s32.o \
+		  src/libmpg123/synth_real.o \
+		  src/libmpg123/feature.o \
+		  src/libmpg123/lfs_alias.o  \
+		  src/libmpg123/synth_altivec.o \
+		  src/libmpg123/dct64_altivec.o \
+		  src/compat/compat.o src/compat/compat_str.o
+
+OBJECTS = $(shell echo $(SOURCES) | sed -e 's,\.c,\.o,g')
+
+#install:
+#	cp libmpg123_shared.a /usr/local/lib
+
+all: $(TARGET)
+
+src/libmpg123/synth_altivec.o:src/libmpg123/synth_altivec.c
+	$(CC) $(CFLAGS) $(INCLUDE) -maltivec -faltivec -o $@ -c $^
+src/libmpg123/dct64_altivec.o:src/libmpg123/dct64_altivec.c
+	$(CC) $(CFLAGS) $(INCLUDE) -maltivec -faltivec  -o $@ -c $^
+	
+playmp3sdl:playmp3sdl.c
+	$(CC) -O2 -Wall playmp3sdl.c -o $@ $(INCLUDE) -I/usr/local/include/SDL2 -LMorphOS/devenv/lib -lmpg123_shared -L/usr/local/lib -lSDL2_mixer -lSDL2 -lm
+
+	
+$(TARGET): $(OBJECTS)
+	$(ARCHIVING)
+	@$(AR) crvs $@ $^
+
+clean:
+	rm -f $(TARGET) $(OBJECTS) 
+

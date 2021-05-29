@@ -360,7 +360,10 @@ int frame_buffers(mpg123_handle *fr)
 #if defined(OPT_ALTIVEC) || defined(OPT_ARM) 
 		/* sizeof(real) >= 4 ... yes, it could be 8, for example.
 		   We got it intialized to at least (512+32)*sizeof(real).*/
+	if(fr->cpu_opts.type == altivec)
+	{
 		decwin_size += 512*sizeof(real);
+	}
 #endif
 		/* Hm, that's basically realloc() ... */
 		if(fr->rawdecwin != NULL && fr->rawdecwins != decwin_size)

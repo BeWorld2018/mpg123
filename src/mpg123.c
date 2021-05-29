@@ -44,6 +44,10 @@
 
 #include "debug.h"
 
+#ifdef __MORPHOS__
+unsigned long __stack = 200000;
+#endif
+
 static void usage(int err);
 static void want_usage(char* arg, topt *);
 static void long_usage(int err);
@@ -179,7 +183,7 @@ void set_intflag()
 	skip_tracks = 0;
 }
 
-#if !defined(WIN32) && !defined(GENERIC)
+#if !defined(WIN32) //&& !defined(GENERIC)
 static void catch_interrupt(void)
 {
 	intflag = TRUE;
@@ -631,8 +635,8 @@ topt opts[] = {
 	{0,   "test-3dnow",  GLO_INT,  0, &runmode, TEST_CPU},
 	#endif
 	{0, "cpu", GLO_ARG | GLO_CHAR, 0, &param.cpu,  0},
-	{0, "test-cpu",  GLO_INT,  0, &runmode, TEST_CPU},
-	{0, "list-cpu", GLO_INT,  0, &runmode , LIST_CPU},
+	{6, "test-cpu",  GLO_INT,  0, &runmode, TEST_CPU},
+	{5, "list-cpu", GLO_INT,  0, &runmode , LIST_CPU},
 #ifdef NETWORK
 	{'u', "auth",        GLO_ARG | GLO_CHAR, 0, &httpauth,   0},
 #endif
@@ -940,7 +944,7 @@ int play_frame(void)
 }
 
 /* Return TRUE if we should continue (second interrupt happens quickly), skipping tracks, or FALSE if we should die. */
-#if !defined(WIN32) && !defined(GENERIC)
+#if !defined(WIN32) //&& !defined(GENERIC)
 int skip_or_die(struct timeval *start_time)
 {
 	/* Death is fatal right away. */
@@ -1003,7 +1007,7 @@ int main(int sys_argc, char ** sys_argv)
 	mpg123_pars *mp;
 	int args_utf8 = FALSE;
 	int pl_utf8   = FALSE;
-#if !defined(WIN32) && !defined(GENERIC)
+#if !defined(WIN32) //&& !defined(GENERIC)
 	struct timeval start_time;
 #endif
 	aux_out = stdout; /* Need to initialize here because stdout is not a constant?! */
@@ -1168,7 +1172,7 @@ int main(int sys_argc, char ** sys_argv)
 
 	httpdata_init(&htd);
 
-#if !defined(WIN32) && !defined(GENERIC)
+#if !defined(WIN32) //&& !defined(GENERIC)
 	if(param.remote && !param.verbose)
 		param.quiet = 1;
 #endif
@@ -1472,7 +1476,7 @@ int main(int sys_argc, char ** sys_argv)
 #endif
 
 /* Rethink that SIGINT logic... */
-#if !defined(WIN32) && !defined(GENERIC)
+#if !defined(WIN32) //&& !defined(GENERIC)
 #ifdef HAVE_TERMIOS
 		if(!param.term_ctrl)
 #endif
@@ -1538,6 +1542,15 @@ int main(int sys_argc, char ** sys_argv)
 
 		mpg123_position(mh, 0, 0, NULL, NULL, &secs, NULL);
 		fprintf(stderr,"[%d:%02d] Decoding of %s finished.\n", (int)(secs / 60), ((int)secs) % 60, filename);
+#ifdef __MORPHOS__		
+		struct timeval now;
+		long secdiff;
+		gettimeofday (&now, NULL);
+
+		secdiff = (now.tv_sec - start_time.tv_sec)*1000 + (now.tv_usec-start_time.tv_usec)/1000;
+
+		printf("Decoding in %d ms\n", secdiff);
+#endif
 	}
 	else if(param.verbose) fprintf(stderr, "\n");
 
@@ -1676,11 +1689,11 @@ static void long_usage(int err)
 	fprintf(o,"        --au <f>           write samples as Sun AU file in <f> (- is stdout)\n");
 	fprintf(o,"        --cdr <f>          write samples as raw CD audio file in <f> (- is stdout)\n");
 	fprintf(o,"        --reopen           force close/open on audiodevice\n");
-	#ifdef OPT_MULTI
+	//#ifdef OPT_MULTI
 	fprintf(o,"        --cpu <string>     set cpu optimization\n");
 	fprintf(o,"        --test-cpu         list optimizations possible with cpu and exit\n");
 	fprintf(o,"        --list-cpu         list builtin optimizations and exit\n");
-	#endif
+	//#endif
 	#ifdef OPT_3DNOW
 	fprintf(o,"        --test-3dnow       display result of 3DNow! autodetect and exit (obsoleted by --cpu)\n");
 	fprintf(o,"        --force-3dnow      force use of 3DNow! optimized routine (obsoleted by --test-cpu)\n");

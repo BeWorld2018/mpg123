@@ -14,6 +14,10 @@
 #include "getcpuflags.h"
 #include "debug.h"
 
+#ifdef __MORPHOS__
+#include <exec/system.h>
+BYTE HasAltiVec = 0;
+#endif
 
 /* Ugly macros to build conditional synth function array values. */
 
@@ -225,8 +229,11 @@ static int find_dectype(mpg123_handle *fr)
 #ifdef OPT_I586
 	else if(basic_synth == synth_1to1_i586) type = ifuenf;
 #endif
-#ifdef OPT_ALTIVEC
+#if defined(OPT_ALTIVEC) && !defined(__MORPHOS__)
 	else if(basic_synth == synth_1to1_altivec) type = altivec;
+#endif
+#if defined(OPT_ALTIVEC) && defined(__MORPHOS__)
+	else if(HasAltiVec && basic_synth == synth_1to1_altivec) type = altivec;
 #endif
 #ifdef OPT_X86_64
 	else if(basic_synth == synth_1to1_x86_64) type = x86_64;
@@ -272,8 +279,11 @@ static int find_dectype(mpg123_handle *fr)
 #ifdef OPT_AVX
 	else if(basic_synth == synth_1to1_real_avx) type = avx;
 #endif
-#ifdef OPT_ALTIVEC
+#if defined(OPT_ALTIVEC) && !defined(__MORPHOS__)
 	else if(basic_synth == synth_1to1_real_altivec) type = altivec;
+#endif
+#if defined(OPT_ALTIVEC) && defined(__MORPHOS__)
+	else if(HasAltiVec && basic_synth == synth_1to1_real_altivec) type = altivec;
 #endif
 #ifdef OPT_NEON
 	else if(basic_synth == synth_1to1_real_neon) type = neon;
@@ -297,8 +307,11 @@ static int find_dectype(mpg123_handle *fr)
 #ifdef OPT_AVX
 	else if(basic_synth == synth_1to1_s32_avx) type = avx;
 #endif
-#ifdef OPT_ALTIVEC
+#if defined(OPT_ALTIVEC) && !defined(__MORPHOS__)
 	else if(basic_synth == synth_1to1_s32_altivec) type = altivec;
+#endif
+#if defined(OPT_ALTIVEC) && defined(__MORPHOS__)
+	else if(HasAltiVec && basic_synth == synth_1to1_s32_altivec) type = altivec;
 #endif
 #ifdef OPT_NEON
 	else if(basic_synth == synth_1to1_s32_neon) type = neon;
@@ -486,13 +499,22 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 #ifdef OPT_DITHER
 	int dithered = FALSE; /* If some dithered decoder is chosen. */
 #endif
-
+#ifdef __MORPHOS__
+	ULONG Altivec = 0;
+	if (NewGetSystemAttrsA(&Altivec,sizeof(Altivec),SYSTEMINFOTYPE_PPC_ALTIVEC,NULL))
+    {
+		if (Altivec)
+		{
+			HasAltiVec = 1;
+		}
+	}
+#endif	
 	want_dec = dectype(cpu);
 	auto_choose = want_dec == autodec;
 	/* Fill whole array of synth functions with generic code first. */
 	fr->synths = synth_base;
 
-#ifndef OPT_MULTI
+#if !defined(OPT_MULTI) && !defined(__MORPHOS__)
 	{
 		if(!auto_choose && want_dec != defopt)
 		{
@@ -773,6 +795,9 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 #	ifdef OPT_ALTIVEC
 	if(!done && (auto_choose || want_dec == altivec))
 	{
+		#ifdef __MORPHOS__	
+		if (HasAltiVec)		{
+		#endif
 		chosen = dn_altivec;
 		fr->cpu_opts.type = altivec;
 #		ifndef NO_16BIT
@@ -788,7 +813,15 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		fr->synths.stereo[r_1to1][f_32] = synth_1to1_s32_stereo_altivec;
 #		endif
 		done = 1;
+		#ifdef __MORPHOS__		
+		}else{
+			chosen = dn_generic;
+			fr->cpu_opts.type = generic;
+			done = 1;
+		}
+		#endif
 	}
+
 #	endif
 
 #	ifdef OPT_NEON
