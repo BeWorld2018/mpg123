@@ -1,13 +1,118 @@
+1.29.2
+------
+- libmpg123: Fix non-live-decoder safeguard for mpg123_framebyframe_decode()
+  (was a no-op in practice, bug 324).
+
+1.29.1
+------
+- mpg123:
+-- Keep default output encoding of s16 for raw and file outputs
+   also with the new resampler. This reverts the unintentional change in
+   1.26.0 of switching to f32 for forced output rate unless the NtoM
+   resampler is selected. In any case, you should make sure to specify
+   your desired --encoding if you depend on it.
+-- Catch error in indexing (mpg123_scan() return value was ignored
+   before, bug 322).
+- mpg123-strip: Lift the resync limit, as it should be to clean up really
+  dirty streams.
+- mpg123-id3dump: Also lift resync limit for the same reasons.
+- libout123: fix reporting of device property flags for buffer
+- libmpg123: more safeguarding against attempts to decode if decoder
+  setup failed and user ignored the returned error code (bug 322)
+
+1.29.0
+------
+- build: added --enable-runtime-tables
+- libmpg123:
+-- Float deocder runtime table computation is back as option,
+   based on suggestion and initial patch by Ethan Halsall for a smaller
+   download size of the wasm decoder built from libmpg23. This only
+   trims the size of the binary on disk (network), for runtime
+   overhead and a bit of uneasyness about concurrency during table
+   computation, which happens implicitly on handle initialization,
+   only guarded by an integer flag. This does _not_ revive
+   mpg123_init().
+-- The ID3v2 UTF-16 BOM check is now a straight-on loop and not a
+   recursive function.
+
+1.28.2
+------
+- libout123
+-- Complete the fix for bug 314, reopening the device after format
+   setup failure.
+
+1.28.1
+------
+- build:
+-- Explain --with-default-audio in configure help better.
+-- Fix build of arm_fpu (regression of configure reorg).
+-- Re-introduce AC_PROG_C_C99 macro for autoconf 2.69, it's only
+   obsolete after that.
+-- Un-break CMake build for botched move of CheckCPUArch.c.in (bug 315).
+-- Avoid conflict of warning macro with MSVC pragmas in two places. Also
+   fix UWP build with strerror check and move down inclusion of intsym.h
+   (bug 316).
+-- Disable libout123 (and mpg123, out123) on UWP with cmake to get at least
+   the decoder lib built (317).
+-- Hack around CMake bug(?) with QUERY_HAS_FPU to make ports/cmake also
+   work in MinGW (bug 318).
+- libmpg123:
+-- Make mpg123.h.in usable again with MPG123_NO_CONFIGURE,
+   for external uses (bug 313).
+-- Use predefined MPG123_API_VERSION in mpg123.h.in for the same.
+-- Better handle the ssize_t situation via typedef mpg123_ssize_t, less
+   likely to be broken in future MSVC versions.
+-- Fix an integer constant definition for the most negative 32 bit numnber to
+   avoid justified compiler complaints.
+- libsyn123:
+-- More support for MPG123_NO_CONFIGURE.
+-- Optionally use predefined SYN123_API_VERSION in syn123.h.in for the same.
+-- Add a cast to silence integer sign warning for offset in muloffdiv64()
+   (bug 317)
+- libout123:
+-- Pulse module advertises wider format support now, not
+   just s16. This makes mpg123 -e s24 work with it, not just out123.
+-- Optionally use predefined OUT123_API_VERSION in out123.h.in for
+   non-configure use.
+-- Fix sndio output to properly query device format support and get
+   default fomat on FreeBSD (bug 314).
+
 1.28.0
 ------
-- Fix up the build to actually build all library objects with libtool
-  consistently, also ensuring no pointless static archives for output
-  modules.
-- Adapted things to autoconf 2.71, requiring 2.69 now (the latter tested
-  on Debian, with their patches).
-- Improved configure to be more useful --with-default-audio to define
-  the search order, fix static build for --with-audio being a list
-  (just choosing the first one).
+- build:
+-- Fix up the build to actually build all library objects with libtool
+   consistently, also ensuring no pointless static archives for output
+   modules.
+-- Adapted things to autoconf 2.71, requiring 2.69 now (the latter tested
+   on Debian, with their patches).
+-- Improved configure to be more useful --with-default-audio to define
+   the search order, fix static build for --with-audio being a list
+   (just choosing the first one).
+-- Ensure consistent use of LINK_MPG123_DLL in headers.
+- build (ports/cmake):
+-- Thanks to Evgeni Poberezhnikov for working with us on that.
+-- Fix up ports/cmake to really work in MSVC also for users of the lib
+   (tested in vcpkg, bug 310).
+-- Hardcode ports/cmake CPU detection for x64 and ARM as
+   CMAKE_SYSTEM_PROCESSOR is useless crap (bug 298 for real).
+-- Add missing io.h for _setmode() MSVC warned about (bug 311).
+-- Added BUILD_NO_LARGENAME define to be used by MSVC builds. Note that
+   an MSVC build of libmpg123 does not support 64 bit file offsets.
+   That would need more morting to the explicit API. Thanks to MS for
+   making off_t even more messy and less useful.
+-- Added JACK output, fixed handling of compat_str there and in win32_wasapi.
+- libsyn123: Fix syn123_mix() to actually do intermediate conversion
+  when input and output encoding are the same but non-float. This makes
+  out123 --mix work with s16 input and output, which is not that special!
+- libmpg123: Fix misguided handling of part2_3_length checks in
+  III_get_scale_factors_1() and III_get_scale_factors_2() which invalidated
+  decoding of a mono source encoded as ms+i-stereo (bug 312). This was
+  a regression introduced with version 1.25.7.
+- libout123:
+-- Print basic module loading errors only for last one in list.
+   This enables use of an output module search list that anticipates module
+   files not installed with the main package.
+-- Fixes for win32_wasapi build with MSVC.
 
 1.27.2
 ------

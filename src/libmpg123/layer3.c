@@ -1,7 +1,7 @@
 /*
 	layer3.c: the layer 3 decoder
 
-	copyright 1995-2017 by the mpg123 project - free software under the terms of the LGPL 2.1
+	copyright 1995-2021 by the mpg123 project - free software under the terms of the LGPL 2.1
 	see COPYING and AUTHORS files in distribution or http://mpg123.org
 	initially written by Michael Hipp
 
@@ -31,6 +31,11 @@
 #endif
 
 #include "l3tabs.h"
+#include "l3bandgain.h"
+
+#ifdef RUNTIME_TABLES
+#include "init_layer3.h"
+#endif
 
 /* Decoder state data, living on the stack of do_layer3. */
 
@@ -68,8 +73,6 @@ struct III_sideinfo
 	/* Hm, funny... struct inside struct... */
 	struct { struct gr_info_s gr[2]; } ch[2];
 };
-
-#include "l3bandgain.h"
 
 #ifdef OPT_MMXORSSE
 real init_layer3_gainpow2_mmx(mpg123_handle *fr, int i)
@@ -309,20 +312,12 @@ static int III_get_scale_factors_1(mpg123_handle *fr, int *scf,struct gr_info_s 
 	int num0 = slen[0][gr_info->scalefac_compress];
 	int num1 = slen[1][gr_info->scalefac_compress];
 
-	if(gr_info->part2_3_length == 0)
-	{
-		int i;
-		for(i=0;i<39;i++)
-			*scf++ = 0;
-		return 0;
-	}
-
 	if(gr_info->block_type == 2)
 	{
 		int i=18;
 		numbits = (num0 + num1) * 18 /* num0 * (17+1?) + num1 * 18 */
 		        - (gr_info->mixed_block_flag ? num0 : 0);
-		if(numbits > gr_info->part2_3_length)
+		if(fr->bits_avail < numbits)
 			return -1;
 
 		if(gr_info->mixed_block_flag)
@@ -347,7 +342,7 @@ static int III_get_scale_factors_1(mpg123_handle *fr, int *scf,struct gr_info_s 
 		if(scfsi < 0)
 		{ /* scfsi < 0 => granule == 0 */
 			numbits = (num0 + num1) * 10 + num0;
-			if(numbits > gr_info->part2_3_length)
+			if(fr->bits_avail < numbits)
 				return -1;
 
 			for(i=11;i;i--) *scf++ = getbits_fast(fr, num0);
@@ -362,7 +357,7 @@ static int III_get_scale_factors_1(mpg123_handle *fr, int *scf,struct gr_info_s 
 			        + !(scfsi & 0x4) * num0 * 5
 			        + !(scfsi & 0x2) * num1 * 5
 			        + !(scfsi & 0x1) * num1 * 5;
-			if(numbits > gr_info->part2_3_length)
+			if(fr->bits_avail < numbits)
 				return -1;
 
 			if(!(scfsi & 0x8))
@@ -434,13 +429,6 @@ static int III_get_scale_factors_2(mpg123_handle *fr, int *scf,struct gr_info_s 
 	}
 
 	pnt = stab[n][(slen>>12)&0x7];
-
-	if(gr_info->part2_3_length == 0)
-	{
-		for(i=0;i<39;i++)
-			*scf++ = 0;
-		return 0;
-	}
 
 	slen2 = slen;
 	for(i=0;i<4;i++)

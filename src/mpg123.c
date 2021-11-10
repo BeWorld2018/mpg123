@@ -997,6 +997,16 @@ int skip_or_die(struct timeval *start_time)
 #define skip_or_die(a) TRUE
 #endif
 
+void formatcheck(void)
+{
+	if(mpg123_errcode(mh) == MPG123_BAD_OUTFORMAT)
+	{
+		fprintf(stderr, "%s", "So, you have trouble getting an output format... this is the matrix of currently possible formats:\n");
+		print_capabilities(ao, mh);
+		fprintf(stderr, "%s", "Somehow the input data and your choices don't allow one of these.\n");
+	}
+}
+
 int main(int sys_argc, char ** sys_argv)
 {
 	int result;
@@ -1390,7 +1400,13 @@ int main(int sys_argc, char ** sys_argv)
 		if(param.index)
 		{
 			if(param.verbose) fprintf(stderr, "indexing...\r");
-			mpg123_scan(mh);
+			if(mpg123_scan(mh) != MPG123_OK)
+			{
+				error1("indexing failed: %s", mpg123_strerror(mh));
+				formatcheck();
+				mpg123_close(mh);
+				continue;
+			}
 		}
 		/*
 			Only trigger a seek if we do not want to start with the first frame.
@@ -1406,12 +1422,7 @@ int main(int sys_argc, char ** sys_argv)
 		if(framenum < 0)
 		{
 			error1("Initial seek failed: %s", mpg123_strerror(mh));
-			if(mpg123_errcode(mh) == MPG123_BAD_OUTFORMAT)
-			{
-				fprintf(stderr, "%s", "So, you have trouble getting an output format... this is the matrix of currently possible formats:\n");
-				print_capabilities(ao, mh);
-				fprintf(stderr, "%s", "Somehow the input data and your choices don't allow one of these.\n");
-			}
+			formatcheck();
 			mpg123_close(mh);
 			continue;
 		}

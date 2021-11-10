@@ -8,6 +8,10 @@
 
 #include "config.h"
 #include "compat.h"
+
+#if defined(WIN32) && defined(DYNAMIC_BUILD)
+#define LINK_MPG123_DLL
+#endif
 #include <mpg123.h>
 
 #include "getlopt.h"
@@ -96,6 +100,8 @@ int main(int argc, char **argv)
 	else
 	{
 		ret = mpg123_param(m, MPG123_VERBOSE, param.verbose, 0.);
+		if(ret == MPG123_OK)
+			mpg123_param(m, MPG123_RESYNC_LIMIT, -1, 0.0);
 		if(ret == MPG123_OK)
 		{
 			if(param.verbose)

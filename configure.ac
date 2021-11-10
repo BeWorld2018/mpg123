@@ -9,20 +9,20 @@ dnl 2.69 at least.
 AC_PREREQ([2.69])
 
 dnl ############# Initialisation
-AC_INIT([mpg123], [1.28.0], [maintainer@mpg123.org])
+AC_INIT([mpg123], [1.29.2], [maintainer@mpg123.org])
 dnl Increment API_VERSION when the API gets changes (new functions).
 
 dnl libmpg123
 API_VERSION=46
-LIB_PATCHLEVEL=1
+LIB_PATCHLEVEL=6
 
 dnl libout123
 OUTAPI_VERSION=4
-OUTLIB_PATCHLEVEL=0
+OUTLIB_PATCHLEVEL=3
 
 dnl libsyn123
 SYNAPI_VERSION=1
-SYNLIB_PATCHLEVEL=2
+SYNLIB_PATCHLEVEL=4
 
 dnl Since we want to be backwards compatible, both sides get set to API_VERSION.
 LIBMPG123_VERSION=$API_VERSION:$LIB_PATCHLEVEL:$API_VERSION
@@ -103,8 +103,8 @@ if test "x$all_static" = xyes; then
 fi
 
 AM_PROG_AS
-dnl We really mean C99 here. The specific macro for that is gone.
-AC_PROG_CC
+dnl For autocinf 2.69, the C99 macro still does something.
+AC_PROG_CC_C99
 AM_PROG_CC_C_O
 AC_PROG_CPP
 AC_PROG_INSTALL
@@ -516,6 +516,22 @@ if test "x$messages" = "xdisabled"; then
   AC_DEFINE(NO_ERRORMSG,   1, [ Define to disable error messages. ])
   AC_DEFINE(NO_ERETURN, 1, [ Define to disable error messages in combination with a return value (the return is left intact). ])
 fi
+
+runtimetables=disabled
+AC_ARG_ENABLE(runtime-tables,
+[  --enable-runtime-tables=[yes/no] calculate tables at runtime saving size at the expense of additional computation at load time ],
+[
+  if test "x$enableval" = xyes; then
+    runtimetables=enabled
+  fi
+]
+, [])
+
+if test "x$runtimetables" = "xenabled"; then
+  AC_DEFINE(RUNTIME_TABLES, 1, [ Define for calculating tables at runtime. ])
+fi
+
+AM_CONDITIONAL([HAVE_RUNTIME_TABLES], [test "x$runtimetables" = xenabled] )
 
 newhuff=enabled
 AC_ARG_ENABLE(new-huffman,
@@ -968,32 +984,33 @@ AC_ARG_ENABLE(layer3,
 AM_CONDITIONAL([HAVE_LAYER3], [test "x$layer3" = xenabled] )
 
 AC_ARG_WITH([audio], [
-  --with-audio=<list of modules>  Select a list (or only one) of audio output modules (comma or space separated list).
+  --with-audio=<list of modules>  Select a list (or only one) of audio output modules (comma or space separated list). Choices are:
+	aix            Use AIX as default audio output sub-system
+	alib           Use Alib as default audio output sub-system (for HPUX)
+	alsa           Use ALSA as default audio output sub-system (libasound)
+	tinyalsa       Use ALSA as default audio output sub-system (tinyalsa)
+	arts           Use aRts as default audio output sub-system (KDE sound server)
+	dummy          Use dummy as default audio (when no sound card is available)
+	esd            Use ESoundD as default audio output sub-system
+	hp             Use HP as default audio output sub-system
+	jack           Use JACK as default low-latency audio server
+	coreaudio      Use Mac OS X as default audio output sub-system (CoreAudio)
+	mint           Use MinT as default audio output sub-system (Atari)
+	nas            Use NAS as default audio output (Network Audio System)
+	os2            Use OS2 as default audio output sub-system
+	oss            Use OSS as default audio output sub-system (/dev/dsp)
+	portaudio      Use PortAudio as default audio output sub-system
+	pulse          Use Pulse audio server as default audio output sub-system
+	qsa            Use QSA as default audio output sub-system
+	sdl            Use SDL as default audio output sub-system (Simple DirectMedia Layer)
+	sgi            Use SGI as default audio output sub-system (IRIX)
+	sndio          Use OpenBSD's sndio as default audio output sub-system
+	sun            Use Sun as default audio output sub-system (/dev/audio)
+	win32          Use Win32 audio as default audio output sub-system
+	win32_wasapi   Use Win32 wasapi audio as default audio output sub-system
 ])
 AC_ARG_WITH([default-audio], [
-  --with-default-audio=aix            Use AIX as default audio output sub-system
-  --with-default-audio=alib           Use Alib as default audio output sub-system (for HPUX)
-  --with-default-audio=alsa           Use ALSA as default audio output sub-system (libasound)
-  --with-default-audio=tinyalsa       Use ALSA as default audio output sub-system (tinyalsa)
-  --with-default-audio=arts           Use aRts as default audio output sub-system (KDE sound server)
-  --with-default-audio=dummy          Use dummy as default audio (when no sound card is available)
-  --with-default-audio=esd            Use ESoundD as default audio output sub-system
-  --with-default-audio=hp             Use HP as default audio output sub-system
-  --with-default-audio=jack           Use JACK as default low-latency audio server
-  --with-default-audio=coreaudio      Use Mac OS X as default audio output sub-system (CoreAudio)
-  --with-default-audio=mint           Use MinT as default audio output sub-system (Atari)
-  --with-default-audio=nas            Use NAS as default audio output (Network Audio System)
-  --with-default-audio=os2            Use OS2 as default audio output sub-system
-  --with-default-audio=oss            Use OSS as default audio output sub-system (/dev/dsp)
-  --with-default-audio=portaudio      Use PortAudio as default audio output sub-system
-  --with-default-audio=pulse          Use Pulse audio server as default audio output sub-system
-  --with-default-audio=qsa            Use QSA as default audio output sub-system
-  --with-default-audio=sdl            Use SDL as default audio output sub-system (Simple DirectMedia Layer)
-  --with-default-audio=sgi            Use SGI as default audio output sub-system (IRIX)
-  --with-default-audio=sndio          Use OpenBSD's sndio as default audio output sub-system
-  --with-default-audio=sun            Use Sun as default audio output sub-system (/dev/audio)
-  --with-default-audio=win32          Use Win32 audio as default audio output sub-system
-  --with-default-audio=win32_wasapi   Use Win32 wasapi audio as default audio output sub-system
+  --with-default-audio=<list of modules>  Select a list of audio output modules to try at runtime, even if not built right now (comma or space separated). See --with-audio for options.
 ])
 
 AC_ARG_WITH([optimization], [
@@ -1270,6 +1287,13 @@ AC_SEARCH_LIBS(socket, socket)
 
 AC_CHECK_FUNCS( getaddrinfo, [ have_ipv6=yes ], [ have_ipv6=no ] )
 
+# A Hack for MSVC builds by cmake: Disable largefile hackery.
+# Maybe one time we support hat wretched environment directly, but
+# for now configure lives in a world where large file support is
+# properly defined and served by off_t.
+BUILD_NO_LARGENAME=0
+AC_SUBST(BUILD_NO_LARGENAME)
+
 # Substitutions for the installable mpg123.h header
 if test "x$ac_cv_header_stdio_h" = "xyes"; then
 	INCLUDE_STDIO_H="#include <stdio.h>"
@@ -1428,7 +1452,7 @@ case $cpu_type in
   ;;
   arm_fpu)
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_MULTI -DOPT_GENERIC -DOPT_GENERIC_DITHER -DOPT_NEON -DREAL_IS_FLOAT"
-    more_sources="$s_neon$s_dither $s_arm_multi"
+    more_sources="$s_neon $s_dither $s_arm_multi"
   ;;
   neon64)
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_NEON64 -DREAL_IS_FLOAT"
@@ -2635,6 +2659,7 @@ echo "
   IEEE 754 hackery ........ $ieee
   New/old WRITE_SAMPLE .... $newoldwritesample
   new Huffman scheme ...... $newhuff
+  runtime tables .......... $runtimetables
 
 Note: Disabling core features is not commonly done and some combinations might
       not build/work. If you encounter such a case, help yourself (and provide

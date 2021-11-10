@@ -21,6 +21,8 @@
 #include "syn123_int.h"
 #include "sample.h"
 #include "debug.h"
+// Avoid conflict with pragmas in isnan() and friends.
+#undef warning
 
 /* Conversions between native byte order encodings. */
 
@@ -895,9 +897,6 @@ syn123_mix( void * MPG123_RESTRICT dst, int dst_enc, int dst_channels
 			,	mixmatrix, samples );
 			goto mix_end;
 		break;
-		default:
-			err = SYN123_BAD_ENC;
-			goto mix_end;
 	}
 	// If still here: Some conversion needed.
 	if(!sh)

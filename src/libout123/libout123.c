@@ -374,7 +374,6 @@ int write_parameters(out123_handle *ao, int who)
 	&&	GOOD_WRITEVAL(fd, ao->gain)
 	&&	GOOD_WRITEVAL(fd, ao->device_buffer)
 	&&	GOOD_WRITEVAL(fd, ao->verbose)
-	&&	GOOD_WRITEVAL(fd, ao->propflags)
 	&& !xfer_write_string(ao, who, ao->name)
 	&& !xfer_write_string(ao, who, ao->bindir)
 	)
@@ -395,7 +394,6 @@ int read_parameters(out123_handle *ao
 	&&	GOOD_READVAL_BUF(fd, ao->gain)
 	&&	GOOD_READVAL_BUF(fd, ao->device_buffer)
 	&&	GOOD_READVAL_BUF(fd, ao->verbose)
-	&&	GOOD_READVAL_BUF(fd, ao->propflags)
 	&& !xfer_read_string(ao, who, &ao->name)
 	&& !xfer_read_string(ao, who, &ao->bindir)
 	)
@@ -978,8 +976,13 @@ static void check_output_module( out123_handle *ao
 		debug1("ao->open() = %i", result);
 		if(result >= 0) /* Opening worked, close again. */
 			ao->close(ao);
-		else if(ao->deinit)
-			ao->deinit(ao); /* Failed, ensure that cleanup after init_output() occurs. */
+		else
+		{
+			if(!AOQUIET)
+				merror("Module '%s' device open failed.", name);
+			if(ao->deinit)
+				ao->deinit(ao); /* Failed, ensure that cleanup after init_output() occurs. */
+		}
 	}
 	else if(!AOQUIET)
 		error2("Module '%s' init failed: %i", name, result);

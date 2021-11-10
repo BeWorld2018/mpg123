@@ -11,12 +11,16 @@
 #define _BSD_SOURCE
 #include "config.h"
 #include "compat.h"
+#if defined(WIN32) && defined(DYNAMIC_BUILD)
+#define LINK_MPG123_DLL
+#endif
 #include "mpg123.h"
 #include "getlopt.h"
 #include <errno.h>
 #include <ctype.h>
-#include "debug.h"
 #include "win32_support.h"
+
+#include "debug.h"
 
 static int errors = 0;
 
@@ -384,6 +388,7 @@ int main(int argc, char **argv)
 	m = mpg123_new(NULL, NULL);
 	mpg123_param(m, MPG123_ADD_FLAGS, MPG123_PICTURE, 0.);
 	mpg123_param(m, MPG123_VERBOSE, param.verbose ? 4 : 0, 0.);
+	mpg123_param(m, MPG123_RESYNC_LIMIT, -1, 0.0);
 
 	for(i=loptind; i < argc; ++i)
 	{
