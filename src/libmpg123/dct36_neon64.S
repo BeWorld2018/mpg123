@@ -6,6 +6,7 @@
 	initially written by Taihei Monma
 */
 
+#include "aarch64_defs.h"
 #include "mangle.h"
 
 #ifndef __APPLE__
@@ -44,11 +45,11 @@ dct36_aarch64_COS9:
 	
 	.text
 	ALIGN4
-	.globl ASM_NAME(dct36_neon64)
+	.globl ASM_NAME(INT123_dct36_neon64)
 #ifdef __ELF__
-	.type ASM_NAME(dct36_neon64), %function
+	.type ASM_NAME(INT123_dct36_neon64), %function
 #endif
-ASM_NAME(dct36_neon64):
+ASM_NAME(INT123_dct36_neon64):
 	adrp		x5, AARCH64_PCREL_HI(dct36_aarch64_COS9)
 	add			x5, x5, AARCH64_PCREL_LO(dct36_aarch64_COS9)
 	cmeq		v28.16b, v28.16b, v28.16b

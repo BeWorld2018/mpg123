@@ -6,7 +6,7 @@
 	initially written by Michael Hipp
 */
 
-#include "out123_int.h"
+#include "../out123_int.h"
 
 #include <sys/ioctl.h>
 #include <fcntl.h>
@@ -39,7 +39,7 @@
 # endif
 #endif
 
-#include "debug.h"
+#include "../../common/debug.h"
 
 struct oss_stuff
 {

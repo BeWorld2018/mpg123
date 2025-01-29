@@ -4,7 +4,7 @@
 	This is example code only sensible to be considered in the public domain.
 	Initially written by Nicholas Humfrey (moved to handle I/O by Thomas Orgis).
 
-	This example program demonstrates how to use libmpg123 to decode a file to WAV (writing via libsndfile), while doing the I/O (read and seek) with custom callback functions.
+	This example program demonstrates how to use libmpg123 to decode a file to WAV (writing via libout123), while doing the I/O (read and seek) with custom callback functions.
 	This should cater for any situation where you have some special means to get to the data (like, mmapped files / plain buffers in memory, funky network streams).
 
 	Disregarding format negotiations, the basic synopsis is:
@@ -22,6 +22,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <strings.h>
 #include <mpg123.h>
 #include <out123.h>
@@ -57,9 +58,9 @@ struct ioh { int fd; };
 /* The callback functions; simple wrappers over standard I/O.
    They could be anything you like... */
 
-static ssize_t read_cb(void *handle, void *buf, size_t sz)
+static mpg123_ssize_t read_cb(void *handle, void *buf, size_t sz)
 {
-	ssize_t ret;
+	mpg123_ssize_t ret;
 	struct ioh *h = handle;
 	errno = 0;
 	ret = read(h->fd, buf, sz);
