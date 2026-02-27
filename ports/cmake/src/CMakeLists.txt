@@ -74,9 +74,9 @@ check_function_exists(execvp HAVE_EXECVP)
 check_function_exists(ctermid HAVE_CTERMID)
 check_function_exists(clock_gettime HAVE_CLOCK_GETTIME)
 
-check_type_size(off_t SIZEOF_OFF_T)
+check_type_size(off_t MPG123_SIZEOF_OFF_T)
 
-if(SIZEOF_OFF_T LESS 8)
+if(MPG123_SIZEOF_OFF_T LESS 8)
 check_function_exists(lseek64 LFS_LARGEFILE_64)
 
 if(LFS_LARGEFILE_64)
@@ -456,7 +456,14 @@ if(UNIX AND NOT PORTABLE_API)
             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
             LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
             RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}/")
-    endif()
+
+        install(
+           FILES
+            "${CMAKE_CURRENT_SOURCE_DIR}/../../../man1/mpg123.1"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../../../man1/out123.1"
+           DESTINATION "${CMAKE_INSTALL_MANDIR}")
+
+   endif()
 endif()
 
 configure_file(config.cmake.h.in config.h)
